@@ -1,1 +1,11 @@
 /* You can add global styles to this file, and also import other style files */
+
+* {
+    font-family: 'Space Grotesk';
+}
+
+html, body {
+    height: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+}
