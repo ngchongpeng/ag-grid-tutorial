@@ -4,7 +4,7 @@ import { AgGridAngular } from 'ag-grid-angular';
 import { ColDef, GridReadyEvent, IServerSideDatasource, IServerSideGetRowsRequest, RowModelType } from 'ag-grid-community';
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-quartz.css";
-import "ag-grid-enterprise";
+import 'ag-grid-enterprise';
 import { IOlympicDataWithId } from '../../models/interfaces';
 
 
@@ -17,16 +17,14 @@ import { IOlympicDataWithId } from '../../models/interfaces';
     style="width: 100%; height: 100%;"
     [columnDefs]="columnDefs"
     [defaultColDef]="defaultColDef"
-    [rowBuffer]="rowBuffer"
     [rowModelType]="rowModelType"
-    [cacheBlockSize]="cacheBlockSize"
-    [maxBlocksInCache]="maxBlocksInCache"
+    [blockLoadDebounceMillis]="blockLoadDebounceMillis"
     [rowData]="rowData"
     [class]="themeClass"
     (gridReady)="onGridReady($event)"
   /> `,
 })
-export class Feature1Component {
+export class Feature2Component {
 
   // properties
   public columnDefs: ColDef[] = [
@@ -40,19 +38,18 @@ export class Feature1Component {
     { field: "bronze" },
   ];
 
+
+
+  // 
   public defaultColDef: ColDef = {
     flex: 1,
     minWidth: 100,
     sortable: false,
   };
 
-  public rowBuffer = 0;
-
   public rowModelType: RowModelType = "serverSide";
 
-  public cacheBlockSize = 50;
-
-  public maxBlocksInCache = 2;
+  public blockLoadDebounceMillis = 1000;
 
   public rowData!: IOlympicDataWithId[];
 
@@ -60,17 +57,18 @@ export class Feature1Component {
 
 
 
+
+
   // constructor
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
+
 
 
 
   // methods
   onGridReady(params: GridReadyEvent<IOlympicDataWithId>) {
     this.http
-      .get<
-        IOlympicDataWithId[]
-      >("https://www.ag-grid.com/example-assets/olympic-winners.json")
+      .get<IOlympicDataWithId[]>("https://www.ag-grid.com/example-assets/olympic-winners.json")
       .subscribe((data) => {
         // adding row id to data
         var idSequence = 0;
@@ -89,6 +87,8 @@ export class Feature1Component {
 
 
 
+
+// funtions
 function createServerSideDatasource(server: any): IServerSideDatasource {
   return {
     getRows: (params) => {
@@ -106,20 +106,19 @@ function createServerSideDatasource(server: any): IServerSideDatasource {
         } else {
           params.fail();
         }
-      }, 500);
+      }, 100);
     },
   };
 }
-
-
 
 function createFakeServer(allData: any[]) {
   return {
     getData: (request: IServerSideGetRowsRequest) => {
       // take a slice of the total rows for requested block
       var rowsForBlock = allData.slice(request.startRow, request.endRow);
-      // here we are pretending we don't know the last row until we reach it!
-      var lastRow = getLastRowIndex(request, rowsForBlock);
+      // when row count is known and 'blockLoadDebounceMillis' is set it is possible to
+      // quickly skip over blocks while scrolling
+      var lastRow = allData.length;
       return {
         success: true,
         rows: rowsForBlock,
@@ -127,13 +126,4 @@ function createFakeServer(allData: any[]) {
       };
     },
   };
-}
-
-
-
-function getLastRowIndex(request: IServerSideGetRowsRequest, results: any[]) {
-  if (!results) return undefined;
-  var currentLastRow = (request.startRow || 0) + results.length;
-  // if on or after the last block, work out the last row, otherwise return 'undefined'
-  return currentLastRow < (request.endRow || 0) ? currentLastRow : undefined;
 }
