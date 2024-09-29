@@ -10,7 +10,7 @@ import { IOlympicDataWithId } from '../../models/interfaces';
 
 
 @Component({
-  selector: "my-app",
+  selector: "app-feature-3",
   standalone: true,
   imports: [AgGridAngular],
   template: `<ag-grid-angular
